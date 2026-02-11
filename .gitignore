@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+uploads/
+results/
+models/
+history/
+.DS_Store
+Thumbs.db
+*.egg-info/
+dist/
+build/

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AITranscriber - 语音转录工具</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航 -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="8" y1="23" x2="16" y2="23"/>
+                    </svg>
+                    <h1>AITranscriber</h1>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="engine-status" id="engineStatus">检测引擎中...</span>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 左侧面板: 上传与设置 -->
+            <aside class="sidebar" id="sidebar">
+                <!-- 文件上传区 -->
+                <section class="panel upload-panel">
+                    <h2 class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        文件上传
+                    </h2>
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <p class="upload-text">拖放文件到此处</p>
+                        <p class="upload-hint">或点击选择文件</p>
+                        <p class="upload-formats">支持 MP3, M4A, WAV, MP4, MKV, AVI 等</p>
+                        <input type="file" id="fileInput" accept=".mp3,.m4a,.wav,.flac,.ogg,.aac,.wma,.mp4,.mkv,.avi,.mov,.webm,.flv" hidden>
+                    </div>
+                    <div class="selected-file" id="selectedFile" style="display:none">
+                        <div class="file-info">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            <span id="fileName"></span>
+                            <span id="fileSize" class="file-size"></span>
+                        </div>
+                        <button class="btn-icon" id="removeFile" title="移除文件">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 转录设置 -->
+                <section class="panel settings-panel">
+                    <h2 class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        转录设置
+                    </h2>
+
+                    <div class="form-group">
+                        <label>转录引擎</label>
+                        <select id="engineSelect">
+                            <option value="">加载中...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>模型</label>
+                        <select id="modelSelect">
+                            <option value="">请先选择引擎</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>语言</label>
+                        <select id="languageSelect">
+                            <option value="auto">自动检测</option>
+                            <option value="zh">中文</option>
+                            <option value="en">English</option>
+                            <option value="ja">日本語</option>
+                            <option value="ko">한국어</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                            <option value="es">Español</option>
+                            <option value="ru">Русский</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary btn-full" id="startBtn" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        开始转录
+                    </button>
+                </section>
+
+                <!-- 任务列表 -->
+                <section class="panel tasks-panel">
+                    <h2 class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                        </svg>
+                        任务列表
+                    </h2>
+                    <div id="taskList" class="task-list">
+                        <div class="empty-state">暂无任务</div>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- 右侧: 转录结果与审校 -->
+            <div class="content-area" id="contentArea">
+                <!-- 欢迎页 -->
+                <div class="welcome" id="welcomeScreen">
+                    <div class="welcome-icon">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                        </svg>
+                    </div>
+                    <h2>开始语音转录</h2>
+                    <p>上传音频或视频文件，选择转录引擎，即可获得带时间轴的文字转录</p>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                                </svg>
+                            </div>
+                            <h3>多引擎</h3>
+                            <p>Whisper / FunASR</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                            </div>
+                            <h3>多格式</h3>
+                            <p>MP3 / M4A / MP4 等</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+                                </svg>
+                            </div>
+                            <h3>时间轴对齐</h3>
+                            <p>逐句同步校对</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                                </svg>
+                            </div>
+                            <h3>跨平台</h3>
+                            <p>MacOS / Windows</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 转录结果页 -->
+                <div class="result-view" id="resultView" style="display:none">
+                    <!-- 音频播放器 -->
+                    <div class="audio-player" id="audioPlayer">
+                        <div class="player-header">
+                            <div class="player-info">
+                                <span class="player-filename" id="playerFilename"></span>
+                                <span class="player-engine" id="playerEngine"></span>
+                            </div>
+                            <div class="player-actions">
+                                <button class="btn btn-outline btn-sm" id="retranscribeBtn" title="重新转录">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="23 4 23 10 17 10"/>
+                                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                                    </svg>
+                                    重新转录
+                                </button>
+                                <div class="export-dropdown">
+                                    <button class="btn btn-outline btn-sm" id="exportBtn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                            <polyline points="7 10 12 15 17 10"/>
+                                            <line x1="12" y1="15" x2="12" y2="3"/>
+                                        </svg>
+                                        导出
+                                    </button>
+                                    <div class="export-menu" id="exportMenu">
+                                        <button data-format="srt">SRT 字幕</button>
+                                        <button data-format="vtt">VTT 字幕</button>
+                                        <button data-format="txt">纯文本</button>
+                                        <button data-format="json">JSON</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="waveform-container">
+                            <div class="waveform-bar" id="waveformBar">
+                                <div class="waveform-progress" id="waveformProgress"></div>
+                                <div class="waveform-cursor" id="waveformCursor"></div>
+                            </div>
+                        </div>
+
+                        <div class="player-controls">
+                            <button class="btn-icon player-btn" id="playPauseBtn" title="播放/暂停">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="playIcon">
+                                    <polygon points="5 3 19 12 5 21 5 3"/>
+                                </svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="pauseIcon" style="display:none">
+                                    <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon player-btn" id="stopBtn" title="停止">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="4" y="4" width="16" height="16" rx="2"/>
+                                </svg>
+                            </button>
+                            <span class="player-time">
+                                <span id="currentTime">00:00</span> / <span id="totalTime">00:00</span>
+                            </span>
+                            <div class="player-speed">
+                                <label>速度</label>
+                                <select id="speedSelect">
+                                    <option value="0.5">0.5x</option>
+                                    <option value="0.75">0.75x</option>
+                                    <option value="1" selected>1x</option>
+                                    <option value="1.25">1.25x</option>
+                                    <option value="1.5">1.5x</option>
+                                    <option value="2">2x</option>
+                                </select>
+                            </div>
+                            <div class="player-volume">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                                </svg>
+                                <input type="range" id="volumeSlider" min="0" max="100" value="80" class="volume-range">
+                            </div>
+                        </div>
+                        <audio id="audioElement" preload="auto"></audio>
+                    </div>
+
+                    <!-- 转录文字区域 -->
+                    <div class="transcript-area" id="transcriptArea">
+                        <div class="transcript-header">
+                            <h3>转录结果</h3>
+                            <div class="transcript-meta">
+                                <span id="segmentCount"></span>
+                                <span id="detectedLang"></span>
+                            </div>
+                        </div>
+                        <div class="segments-list" id="segmentsList"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 重新转录对话框 -->
+        <div class="modal-overlay" id="retranscribeModal" style="display:none">
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <h3>重新转录</h3>
+                    <button class="btn-icon" id="retranscribeModalClose">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-filename" id="retranscribeFilename"></p>
+                    <div class="form-group">
+                        <label>转录引擎</label>
+                        <select id="retranscribeEngine"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>模型</label>
+                        <select id="retranscribeModel"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>语言</label>
+                        <select id="retranscribeLanguage">
+                            <option value="auto">自动检测</option>
+                            <option value="zh">中文</option>
+                            <option value="en">English</option>
+                            <option value="ja">日本語</option>
+                            <option value="ko">한국어</option>
+                            <option value="fr">Français</option>
+                            <option value="de">Deutsch</option>
+                            <option value="es">Español</option>
+                            <option value="ru">Русский</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline btn-sm" id="retranscribeCancel">取消</button>
+                    <button class="btn btn-primary btn-sm" id="retranscribeConfirm">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        开始转录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
