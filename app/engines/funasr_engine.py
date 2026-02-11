@@ -1,14 +1,11 @@
 """FunASR 转录引擎"""
 import os
-import logging
 from typing import Dict, List, Any, Optional
 
 from app.engines.base import (
     BaseEngine, TranscriptionResult, TranscriptionSegment, register_engine
 )
 from app.config import MODEL_CACHE_DIR
-
-logger = logging.getLogger(__name__)
 
 
 class FunASREngine(BaseEngine):
@@ -65,23 +62,12 @@ class FunASREngine(BaseEngine):
 
     def _load_pipeline(self, model_name: str):
         if model_name not in self._pipeline_cache:
-            # 1. 校验 funasr 包可用
-            try:
-                from funasr import AutoModel
-            except ImportError as e:
-                raise RuntimeError(
-                    f"FunASR 未安装或导入失败: {e}。请运行: pip install funasr"
-                ) from e
-            except Exception as e:
-                raise RuntimeError(
-                    f"FunASR 加载异常: {e}"
-                ) from e
+            from funasr import AutoModel
 
             cache_dir = os.path.join(MODEL_CACHE_DIR, "funasr")
             os.makedirs(cache_dir, exist_ok=True)
 
             config = self._get_model_config(model_name)
-            logger.info(f"[FunASR] 加载模型 {model_name}, 配置: {config}")
 
             kwargs = {"model": config["model"], "model_revision": "v2.0.4"}
             if "vad_model" in config:
@@ -94,30 +80,7 @@ class FunASREngine(BaseEngine):
                 kwargs["spk_model"] = config["spk_model"]
                 kwargs["spk_model_revision"] = "v2.0.2"
 
-            # 2. 校验模型加载
-            try:
-                pipeline = AutoModel(**kwargs)
-            except FileNotFoundError as e:
-                raise RuntimeError(
-                    f"FunASR 模型文件缺失 ({model_name}): {e}。"
-                    f"请运行: python download_models.py --funasr {'zh' if 'zh' in model_name else 'en'}"
-                ) from e
-            except ConnectionError as e:
-                raise RuntimeError(
-                    f"FunASR 模型下载失败 ({model_name}): {e}。请检查网络连接或手动下载模型。"
-                ) from e
-            except Exception as e:
-                raise RuntimeError(
-                    f"FunASR 模型 {model_name} 加载失败: {type(e).__name__}: {e}"
-                ) from e
-
-            if pipeline is None:
-                raise RuntimeError(
-                    f"FunASR 模型 {model_name} 加载返回 None，请检查模型配置和文件完整性。"
-                )
-
-            logger.info(f"[FunASR] 模型 {model_name} 加载成功")
-            self._pipeline_cache[model_name] = pipeline
+            self._pipeline_cache[model_name] = AutoModel(**kwargs)
 
         return self._pipeline_cache[model_name]
 
@@ -128,36 +91,15 @@ class FunASREngine(BaseEngine):
         if not model_name:
             model_name = "paraformer-zh"
 
-        # 校验模型名称
-        valid_models = {m["id"] for m in self.get_models()}
-        if model_name not in valid_models:
-            raise ValueError(
-                f"不支持的 FunASR 模型: {model_name}，可选: {', '.join(valid_models)}"
-            )
-
         if progress_callback:
             progress_callback(0.1, "正在加载FunASR模型...")
 
-        try:
-            pipeline = self._load_pipeline(model_name)
-        except RuntimeError:
-            raise
-        except Exception as e:
-            raise RuntimeError(f"FunASR 模型加载失败: {type(e).__name__}: {e}") from e
+        pipeline = self._load_pipeline(model_name)
 
         if progress_callback:
             progress_callback(0.3, "模型加载完成，开始转录...")
 
-        # 校验音频文件
-        if not os.path.isfile(audio_path):
-            raise FileNotFoundError(f"音频文件不存在: {audio_path}")
-
-        try:
-            result = pipeline.generate(input=audio_path)
-        except Exception as e:
-            raise RuntimeError(
-                f"FunASR 转录执行失败 ({model_name}): {type(e).__name__}: {e}"
-            ) from e
+        result = pipeline.generate(input=audio_path)
 
         if progress_callback:
             progress_callback(0.9, "转录完成，正在处理结果...")
